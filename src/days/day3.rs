@@ -12,17 +12,16 @@ fn priority(x: char) -> i32 {
 }
 
 fn intersection(sets: &[HashSet<char>]) -> Vec<char> {
-    let Some((first, rest)) = sets.split_first() else {
-        return vec![];
-    };
-    let mut result = first.iter().cloned().collect::<Vec<_>>();
-    rest.iter().for_each(|s| result.retain(|e| s.contains(e)));
-    result
+    sets.split_first().map(|(first, rest)| {
+        first.into_iter()
+            .cloned()
+            .filter(|c| rest.iter().all(|s| s.contains(c)))
+            .collect::<Vec<_>>()
+    }).unwrap_or_default()
 }
 
 fn part1(input: &str) -> String {
-    input
-        .lines()
+    input.lines()
         .flat_map(|l| {
             let (first, second) = l.split_at(l.len() / 2);
             let first = first.chars().collect::<HashSet<_>>();
@@ -33,8 +32,7 @@ fn part1(input: &str) -> String {
 }
 
 fn part2(input: &str) -> String {
-    let rucksacks = input
-        .lines()
+    let rucksacks = input.lines()
         .map(|l| l.chars().collect::<HashSet<_>>())
         .collect::<Vec<_>>();
 
