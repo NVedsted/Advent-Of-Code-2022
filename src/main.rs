@@ -1,11 +1,12 @@
 use std::{fs, io};
 use std::io::Read;
 use std::path::Path;
+use std::time::Duration;
 
 use clap::Parser;
 use colored::Colorize;
 
-use crate::day::DaySolver;
+use crate::day::{DayReport, PartReport};
 
 mod day;
 mod days;
@@ -24,34 +25,47 @@ struct Args {
 
     #[arg(help = "Attempts to validate outputs.", long, short)]
     validate: bool,
+
+    #[arg(help = "Show timings.", long, short)]
+    timings: bool,
 }
 
 fn main() {
     let args = Args::parse();
 
     if let Some(day) = args.day {
-        run_day(day, &args);
+        if run_day(day, &args).is_none() {
+            println!("{}", format!("No solver for day {}", day).bright_yellow());
+        }
     } else {
-        (1..=25)
-            .for_each(|i| run_day(i, &args));
+        let days = (1..=25)
+            .map(|i| run_day(i, &args))
+            .collect::<Vec<_>>();
+
+        if args.timings {
+            let total = days
+                .into_iter()
+                .filter_map(|r| r.and_then(|r| r.total_timing))
+                .sum::<Duration>();
+
+            println!("\nTotal time: {}ms", total.as_millis());
+        }
     }
 }
 
-fn run_day(day: usize, args: &Args) {
+fn run_day(day: usize, args: &Args) -> Option<DayReport> {
     if day < 1 || day > 25 {
-        panic!("Day out of bounds");
+        println!("{}", "Day out of bounds".red());
+        return None;
     }
 
-    println!("Day {}", day);
-
     let Some(solver) = &days::DAYS[day - 1] else {
-        println!("\t{}", "No solver".bright_yellow());
-        return;
+        return None;
     };
 
     let input = if args.stdin {
         let mut input = String::new();
-        io::stdin().read_to_string(&mut input).expect("Failed to get input");
+        io::stdin().read_to_string(&mut input).unwrap();
 
         input
     } else {
@@ -62,25 +76,46 @@ fn run_day(day: usize, args: &Args) {
         let path = Path::new(&filename);
 
         if !path.exists() {
-            println!("\t{}", "No input".red());
-            return;
+            println!("{}", format!("Day {} has no input", day).red());
+            return None;
         }
 
         fs::read_to_string(filename).unwrap()
     }.replace('\r', "");
 
-    let (part1, part2) = solve_day(solver, &input);
-    present_part(day, 1, args.validate, &part1);
-    present_part(day, 2, args.validate, &part2);
+    let report = solver.solve(&input);
+
+    print!("Day {}", day);
+
+    if let Some(total_timing) = report.total_timing {
+        if args.timings {
+            print!(" ({}ms)", total_timing.as_millis());
+        }
+    }
+
+    println!();
+
+    present_part(day, 1, args.validate, args.timings, &report.part1);
+    present_part(day, 2, args.validate, args.timings, &report.part2);
+
+    Some(report)
 }
 
-fn present_part(day: usize, part: usize, validate: bool, result: &Option<String>) {
+fn present_part(day: usize, part: usize, validate: bool, timings: bool, report: &Option<PartReport>) {
     print!("\tPart {}: ", part);
-    if let Some(result) = result {
-        println!("{}", result.blue());
+    if let Some(report) = report {
+        print!("{}", report.result.blue());
+
+        if let Some(timing) = report.timing {
+            if timings {
+                print!(" ({}ms)", timing.as_millis());
+            }
+        }
+
+        println!();
 
         if validate {
-            validate_part(day, part, &result);
+            validate_part(day, part, &report.result);
         }
     } else {
         println!("{}", "Not implemented".bright_yellow());
@@ -99,18 +134,7 @@ fn validate_part(day: usize, part: usize, actual: &str) {
         if actual == expected {
             println!("\t{}", "Validated".green());
         } else {
-            panic!("Day {} part {} failed validation!\nExpected: {}\nActual: {}", day, part, expected, actual);
-        }
-    }
-}
-
-fn solve_day(solver: &DaySolver, input: &str) -> (Option<String>, Option<String>) {
-    match solver {
-        DaySolver::Standard { part1, part2 } =>
-            (part1.map(|s1| s1(input)), part2.map(|s2| s2(input))),
-        DaySolver::Double(solver) => {
-            let (s1, s2) = solver(input);
-            (Some(s1), Some(s2))
+            println!("{}", format!("Day {} part {} failed validation!\nExpected: {}\nActual: {}", day, part, expected, actual).red());
         }
     }
 }
