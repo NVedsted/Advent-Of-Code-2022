@@ -8,16 +8,12 @@ struct Range {
 }
 
 impl Range {
-    fn contains(&self, point: i32) -> bool {
-        point >= self.from && point <= self.to
-    }
-
     fn fully_contains(&self, other: &Range) -> bool {
         self.from <= other.from && self.to >= other.to
     }
 
     fn overlaps(&self, other: &Range) -> bool {
-        self.fully_contains(other) || other.contains(self.from) || other.contains(self.to)
+        self.from <= other.to && self.to >= other.from
     }
 }
 
