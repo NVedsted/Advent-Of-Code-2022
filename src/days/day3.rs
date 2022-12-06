@@ -1,44 +1,47 @@
-use std::collections::HashSet;
 use crate::day::DaySolver;
 
-pub const DAY_3: DaySolver = DaySolver::Standard { part1: Some(part1), part2: Some(part2) };
+pub const DAY_3: DaySolver = DaySolver::Double(solver);
 
-fn priority(x: char) -> i32 {
+fn priority(x: u8) -> usize {
     if x.is_ascii_lowercase() {
-        x as i32 - 'a' as i32 + 1
+        x as usize - 'a' as usize + 1
     } else {
-        x as i32 - 'A' as i32 + 27
+        x as usize - 'A' as usize + 27
     }
 }
 
-fn intersection(sets: &[HashSet<char>]) -> Vec<char> {
-    sets.split_first().map(|(first, rest)| {
-        first.into_iter()
-            .cloned()
-            .filter(|c| rest.iter().all(|s| s.contains(c)))
-            .collect::<Vec<_>>()
-    }).unwrap_or_default()
+fn intersection(sets: &[&[u8]]) -> usize {
+    let mut seen = [0; 53];
+
+    sets.iter()
+        .enumerate()
+        .for_each(|(i, l)| l.iter().cloned().for_each(|e| {
+            let p = priority(e);
+            if seen[p] == i {
+                seen[p] = i + 1;
+            }
+        }));
+
+    seen.into_iter().enumerate().filter(|&(_, c)| c == sets.len()).next().unwrap().0
 }
 
-fn part1(input: &str) -> String {
-    input.lines()
-        .flat_map(|l| {
-            let (first, second) = l.split_at(l.len() / 2);
-            let first = first.chars().collect::<HashSet<_>>();
-            let second = second.chars().collect::<HashSet<_>>();
-            intersection(&[first, second])
-        })
-        .map(priority).sum::<i32>().to_string()
-}
-
-fn part2(input: &str) -> String {
-    let rucksacks = input.lines()
-        .map(|l| l.chars().collect::<HashSet<_>>())
+fn solver(input: &str) -> (String, String) {
+    let lines = input.lines()
+        .map(str::as_bytes)
         .collect::<Vec<_>>();
 
-    rucksacks.chunks_exact(3)
-        .flat_map(intersection)
-        .map(priority).sum::<i32>().to_string()
+    let part1 = lines.iter()
+        .map(|l| {
+            let (first, second) = l.split_at(l.len() / 2);
+            intersection(&[first, second])
+        })
+        .sum::<usize>().to_string();
+
+    let part2 = lines.chunks_exact(3)
+        .map(|w| intersection(&[&w[0], &w[1], &w[2]]))
+        .sum::<usize>().to_string();
+
+    (part1, part2)
 }
 
 
@@ -55,12 +58,9 @@ ttgJtRGJQctTZtZT
 CrZsJsPPZsGzwwsLwLmpwMDw";
 
     #[test]
-    fn test_part1() {
-        assert_eq!("157", part1(EXAMPLE_INPUT));
-    }
-
-    #[test]
-    fn test_part2() {
-        assert_eq!("70", part2(EXAMPLE_INPUT));
+    fn test() {
+        let (part1, part2) = solver(EXAMPLE_INPUT);
+        assert_eq!("157", part1);
+        assert_eq!("70", part2);
     }
 }
