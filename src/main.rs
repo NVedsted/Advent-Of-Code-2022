@@ -48,7 +48,7 @@ fn main() {
                 .filter_map(|r| r.and_then(|r| r.total_timing))
                 .sum::<Duration>();
 
-            println!("\nTotal time: {}ms", total.as_millis());
+            println!("\nTotal time: {:?}", total);
         }
     }
 }
@@ -89,7 +89,7 @@ fn run_day(day: usize, args: &Args) -> Option<DayReport> {
 
     if let Some(total_timing) = report.total_timing {
         if args.timings {
-            print!(" ({}ms)", total_timing.as_millis());
+            print!(" ({:?})", total_timing);
         }
     }
 
@@ -108,7 +108,7 @@ fn present_part(day: usize, part: usize, validate: bool, timings: bool, report: 
 
         if let Some(timing) = report.timing {
             if timings {
-                print!(" ({}ms)", timing.as_millis());
+                print!(" ({:?})", timing);
             }
         }
 
