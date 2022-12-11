@@ -90,20 +90,12 @@ impl From<&str> for Monkey {
         let starting_items = lines.next().unwrap()[18..].split(", ")
             .map(|e| e.parse::<usize>().unwrap())
             .collect::<VecDeque<_>>();
-
         let operation = lines.next().unwrap()[19..].into();
-
         let test_divisible_by = lines.next().unwrap()[21..].parse().unwrap();
         let test_true_throws_to = lines.next().unwrap()[29..].parse().unwrap();
         let test_false_throws_to = lines.next().unwrap()[30..].parse().unwrap();
 
-        Self {
-            starting_items,
-            operation,
-            test_divisible_by,
-            test_true_throws_to,
-            test_false_throws_to,
-        }
+        Self { starting_items, operation, test_divisible_by, test_true_throws_to, test_false_throws_to }
     }
 }
 
