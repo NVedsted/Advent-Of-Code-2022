@@ -9,6 +9,7 @@ mod day8;
 mod day9;
 mod day10;
 mod day11;
+mod day12;
 
 use crate::day::DaySolver;
 
@@ -25,7 +26,7 @@ pub const DAYS: [Option<DaySolver>; 25] = [
     Some(day9::DAY_9),
     Some(day10::DAY_10),
     Some(day11::DAY_11),
-    None,
+    Some(day12::DAY_12),
     None,
     None,
     None,
