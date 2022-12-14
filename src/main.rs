@@ -123,7 +123,7 @@ fn present_part(day: usize, part: usize, validate: bool, timings: bool, report: 
 }
 
 fn validate_part(day: usize, part: usize, actual: &str) {
-    let filename = format!("input/day{}.{}.out", day, part);
+    let filename = format!("output/part{}/day{}.out", part, day);
     let path = Path::new(&filename);
 
     if !path.exists() {
